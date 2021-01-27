@@ -20,4 +20,4 @@ F2 - Joins your friends via an invite link (clipboard)
 
 ## Contact
 
-To report issues or enquire about something, you may join [ev.io Discord server](https://discord.com/invite/PsqyKjDKBZ)
+To report issues or enquire about something, you may join ev.io [Discord server](https://discord.com/invite/PsqyKjDKBZ)
