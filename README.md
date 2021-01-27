@@ -14,7 +14,7 @@ F2 - Joins your friends via an invite link (clipboard)
 
 ### For Windows:
 1. Install  [here](https://github.com/PoweredByWard/ev/releases)
-2. Open PoweredClient.exe
+2. Open EvClient-Windows.exe
 
 ### Mac (coming soon)
 
