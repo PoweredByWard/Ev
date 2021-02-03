@@ -3,6 +3,10 @@
   "version": "1.0.4",
   "description": "Official Ev.io Client",
   "main": "main.js",
+  "author": {
+    "name": "ev.io",
+    "email": "client@ev.io"
+  },
   "scripts": {
     "start": "electron .",
     "build-win": "electron-builder -w",
@@ -21,11 +25,7 @@
     },
     "linux": {
       "icon": "build/logo.png",
-      "target": [
-        "deb",
-        "snap",
-        "rpm"
-      ],
+      "target": "deb",
       "category": "Utility"
     },
     "win": {
@@ -63,7 +63,6 @@
     "Ev",
     "ev.io"
   ],
-  "author": "Ev.io",
   "license": "ISC",
   "dependencies": {
     "discord-rpc": "^3.1.4",
