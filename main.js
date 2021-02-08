@@ -13,6 +13,9 @@ if (process.platform == "win32") {
   app.commandLine.appendSwitch("enable-pointer-lock-options");
   app.commandLine.appendSwitch("enable-quic");
   app.commandLine.appendSwitch("disable-accelerated-video-decode", false);
+  // Option for screen capture
+  app.commandLine.appendSwitch('use-angle', 'd3d9');
+  app.commandLine.appendSwitch('enable-webgl2-compute-context');
 }
 
 function Init() {
@@ -87,9 +90,11 @@ function Init() {
   }
   let shortcut1 = "F1";
   let shortcut2 = "F2";
+  let shortcut3 = "F5";
   if (process.platform == "darwin") {
     shortcut1 = "CommandOrControl+" + shortcut1;
     shortcut2 = "CommandOrControl+" + shortcut2;
+    shortcut3 = "CommandOrControl+" + shortcut3;
   }
   shortcut.register(mainWindow, shortcut2, () => {
     LinkBox();
@@ -103,6 +108,10 @@ function Init() {
 
   shortcut.register(mainWindow, shortcut1, () => {
     mainWindow.loadURL("https://ev.io/");
+  });
+
+  shortcut.register(mainWindow, shortcut3, () => {
+    mainWindow.reload();
   });
 
   shortcut.register("ESC", () => {
