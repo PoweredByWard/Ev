@@ -8,23 +8,12 @@ var mainWindow;
 let fromlogin = false;
 
 if (process.platform == "win32") {
-<<<<<<< HEAD
-  app.commandLine.appendSwitch("ignore-gpu-blacklist");
-  app.commandLine.appendSwitch("disable-gpu-vsync");
-  app.commandLine.appendSwitch("enable-pointer-lock-options");
-  app.commandLine.appendSwitch("enable-quic");
-  app.commandLine.appendSwitch("disable-accelerated-video-decode", false);
-  // Option for screen capture
-  app.commandLine.appendSwitch('use-angle', 'd3d9');
-  app.commandLine.appendSwitch('enable-webgl2-compute-context');
-=======
     app.commandLine.appendSwitch("ignore-gpu-blacklist");
     app.commandLine.appendSwitch("disable-gpu-vsync");
     app.commandLine.appendSwitch("enable-pointer-lock-options");
     app.commandLine.appendSwitch("enable-quic");
     app.commandLine.appendSwitch("disable-accelerated-video-decode", false);
     app.commandLine.appendSwitch("disable-frame-rate-limit");
->>>>>>> upstream/master
 }
 
 function Init() {
@@ -100,33 +89,11 @@ function Init() {
     function ispasted(url) {
         mainWindow.loadURL(url);
     }
-<<<<<<< HEAD
-  }
-
-  function ispasted(url) {
-    mainWindow.loadURL(url);
-  }
-  let shortcut1 = "F1";
-  let shortcut2 = "F2";
-  let shortcut3 = "F5";
-  if (process.platform == "darwin") {
-    shortcut1 = "CommandOrControl+" + shortcut1;
-    shortcut2 = "CommandOrControl+" + shortcut2;
-    shortcut3 = "CommandOrControl+" + shortcut3;
-  }
-  shortcut.register(mainWindow, shortcut2, () => {
-    LinkBox();
-    //check paste for joining private game
-    let clipboardText = clipboard.readText();
-    if (clipboardText.indexOf("ev.io/?game=") === -1) {
-      clipboardText = "https://ev.io/";
-=======
     let shortcut1 = "F1";
     let shortcut2 = "F2";
     if (process.platform == "darwin") {
         shortcut1 = "CommandOrControl+" + shortcut1;
         shortcut2 = "CommandOrControl+" + shortcut2;
->>>>>>> upstream/master
     }
     shortcut.register(mainWindow, shortcut2, () => {
         LinkBox();
@@ -142,19 +109,9 @@ function Init() {
         mainWindow.loadURL("https://ev.io/");
     });
 
-<<<<<<< HEAD
-  shortcut.register(mainWindow, shortcut3, () => {
-    mainWindow.reload();
-  });
-
-  shortcut.register("ESC", () => {
-    mainWindow.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'M' });
-    mainWindow.webContents.executeJavaScript(`
-=======
     shortcut.register("ESC", () => {
         mainWindow.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'M' });
         mainWindow.webContents.executeJavaScript(`
->>>>>>> upstream/master
                 document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
                 document.exitPointerLock();
   `);
