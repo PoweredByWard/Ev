@@ -14,6 +14,8 @@ if (process.platform == "win32") {
     app.commandLine.appendSwitch("enable-quic");
     app.commandLine.appendSwitch("disable-accelerated-video-decode", false);
     app.commandLine.appendSwitch("disable-frame-rate-limit");
+    app.commandLine.appendSwitch('use-angle', 'd3d9');
+    app.commandLine.appendSwitch('enable-webgl2-compute-context');
 }
 
 function Init() {
@@ -114,7 +116,7 @@ function Init() {
         mainWindow.webContents.executeJavaScript(`
                 document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
                 document.exitPointerLock();
-  `);
+    `);
     });
     mainWindow.webContents.on("will-prevent-unload", (event) =>
         event.preventDefault()
