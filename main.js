@@ -1,3 +1,7 @@
+/* eslint-disable no-new */
+/* eslint-disable node/no-callback-literal */
+/* eslint-disable node/no-path-concat */
+
 const {
   app,
   shell,
@@ -121,7 +125,6 @@ class Start {
         discord.setActivity({
           largeImageKey: 'logo',
           largeImageText: 'EvClient +',
-          startTimestamp:  new Date().setTime(Date.now() + Number.parseInt(timeLeft)),
           details: 'EvClient +',
           state: 'By Urban'
         })
