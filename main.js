@@ -1,11 +1,17 @@
+/* eslint-disable no-new */
+/* eslint-disable node/no-callback-literal */
+/* eslint-disable node/no-path-concat */
+
 const {
   app,
   shell,
   BrowserWindow,
   clipboard,
   screen,
+  ipcMain
 } = require('electron')
 
+const prompt = require('electron-prompt')
 class Start {
   constructor () {
     /*
@@ -18,6 +24,8 @@ class Start {
     app.commandLine.appendSwitch("enable-quic");
     app.commandLine.appendSwitch("disable-accelerated-video-decode", false);
     app.commandLine.appendSwitch('disable-frame-rate-limit')
+    app.commandLine.appendSwitch('use-angle', 'd3d11ond12');
+    app.commandLine.appendSwitch('enable-webgl2-compute-context');
     
     /*
         *** CHECKS IF IT WILL OPEN ***
@@ -43,6 +51,9 @@ class Start {
       height:  screen.getPrimaryDisplay().workAreaSize.height,
       fullscreen: true,
       show: false,
+      webPreferences: {
+        preload: (url === 'https://ev.io') ? __dirname + '/preload.js' : null
+      }
     })
 
     this.gameWindow.loadURL(url)
@@ -58,10 +69,6 @@ class Start {
         event.preventDefault()
         shell.openExternal(url)
       }
-      else {
-        event.preventDefault()
-        this.createWindow(url)
-      }
     })
 
     /* 
@@ -72,7 +79,7 @@ class Start {
       prompt({
         title: "Join a Private game",
         label: "Please enter your Invite link here",
-        value: paste,
+        value: 'https://ev.io',
         inputAttrs: {
             type: "url",
         },
@@ -96,8 +103,8 @@ class Start {
       'F1': () => this.gameWindow.loadURL('https://ev.io'),
       'F2': () => {
         if (typeof clipboard.readText() === 'string') {
-          if (new URL(clipboard.readText()).pathname.length > 0) {
-            this.gameWindow.loadURL(new URL(clipboard.readText()))
+          if (clipboard.readText().split('?party=').length > 1) {
+            this.gameWindow.loadURL(clipboard.readText())
           }
           else getLink()
         }
@@ -140,12 +147,14 @@ class Start {
     discord.login({
       clientId: "803733389885833236",
     }).then(() => {
-      discord.setActivity({
-        largeImageKey: 'logo',
-        largeImageText: 'EvClient+',
-        startTimestamp: Date.now(),
-        details: 'EvClient',
-        state: 'By Urban'
+      ipcMain.on('RPC', (event, timeLeft) => {
+        discord.setActivity({
+          largeImageKey: 'logo',
+          largeImageText: 'EvClient +',
+          startTimestamp:  new Date().setTime(Date.now() + Number.parseInt(timeLeft)),
+          details: 'EvClient +',
+          state: 'By Urban'
+        })
       })
     })
   }
