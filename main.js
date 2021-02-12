@@ -1,7 +1,3 @@
-/* eslint-disable no-new */
-/* eslint-disable node/no-callback-literal */
-/* eslint-disable node/no-path-concat */
-
 const {
   app,
   shell,
@@ -46,21 +42,13 @@ class Start {
       width: screen.getPrimaryDisplay().workAreaSize.width,
       height:  screen.getPrimaryDisplay().workAreaSize.height,
       fullscreen: true,
-      show: true,
+      show: false,
     })
 
     this.gameWindow.loadURL(url)
     this.gameWindow.removeMenu()
 
-    /* 
-        *** REGISTERS SHORTCUT ***
-    */
-    const shortcut = require('electron-localshortcut')
-    shortcut.register('F1', () => this.gameWindow.loadURL('https://ev.io'))
-    shortcut.register('F2', () => this.gameWindow.loadURL(clipboard.readText()))
-    shortcut.register('Escape', () => {
-      this.gameWindow.webContents.executeJavaScript("document.documentElement.dispatchEvent(new KeyboardEvent('keydown',{'which':'77'}));")
-    })
+    this.gameWindow.on('ready-to-show', () => this.gameWindow.show())
     this.gameWindow.webContents.on('will-prevent-unload', (event) => event.preventDefault())
     this.gameWindow.webContents.on('dom-ready', () => {
       this.startUpdater()
@@ -70,6 +58,60 @@ class Start {
         event.preventDefault()
         shell.openExternal(url)
       }
+      else {
+        event.preventDefault()
+        this.createWindow(url)
+      }
+    })
+
+    /* 
+        *** ASKS FOR USER'S LINK AND JOINS LINK *** 
+    */
+    
+    function getLink() {
+      prompt({
+        title: "Join a Private game",
+        label: "Please enter your Invite link here",
+        value: paste,
+        inputAttrs: {
+            type: "url",
+        },
+        type: "input"
+      }).then((url) => {
+        if (new URL(url).hostname.includes('https://ev.io') && new URL(url).pathname.length > 0) {
+          this.gameWindow.loadURL(new URL(url))
+        }
+        else {
+          getLink()
+        }
+      })
+    }
+
+    /* 
+        *** REGISTERS SHORTCUT ***
+    */
+
+    const shortcut = require('electron-localshortcut')
+    const shortcutRegister = {
+      'F1': () => this.gameWindow.loadURL('https://ev.io'),
+      'F2': () => {
+        if (typeof clipboard.readText() === 'string') {
+          if (new URL(clipboard.readText()).pathname.length > 0) {
+            this.gameWindow.loadURL(new URL(clipboard.readText()))
+          }
+          else getLink()
+        }
+        else getLink()
+      },
+      'F10': () => (this.gameWindow.isMaximized()) ? this.gameWindow.unmaximize(true) : this.gameWindow.maximize(true),
+      'F11': () => this.gameWindow.setSimpleFullScreen(!this.gameWindow.isSimpleFullScreen()),
+      'F12': () => this.gameWindow.webContents.openDevTools(),
+      'CommandOrControl+F5': this.gameWindow.webContents.reloadIgnoringCache(),
+      'Alt+F4': () => app.quit()
+    }
+
+    Object.keys(shortcutRegister).forEach((keys) => {
+      shortcut.register((process.platform === 'darwin' && keys.indexOf('F') === 0) ? 'CommandOrControl+' + keys : keys, shortcutRegister[keys])
     })
   }
 
