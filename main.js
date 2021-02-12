@@ -1,7 +1,3 @@
-/* eslint-disable no-new */
-/* eslint-disable node/no-callback-literal */
-/* eslint-disable node/no-path-concat */
-
 const {
   app,
   shell,
@@ -70,30 +66,7 @@ class Start {
         shell.openExternal(url)
       }
     })
-
-    /* 
-        *** ASKS FOR USER'S LINK AND JOINS LINK *** 
-    */
     
-    function getLink() {
-      prompt({
-        title: "Join a Private game",
-        label: "Please enter your Invite link here",
-        value: 'https://ev.io',
-        inputAttrs: {
-            type: "url",
-        },
-        type: "input"
-      }).then((url) => {
-        if (new URL(url).hostname.includes('https://ev.io') && new URL(url).pathname.length > 0) {
-          this.gameWindow.loadURL(new URL(url))
-        }
-        else {
-          getLink()
-        }
-      })
-    }
-
     /* 
         *** REGISTERS SHORTCUT ***
     */
@@ -106,9 +79,7 @@ class Start {
           if (clipboard.readText().split('?party=').length > 1) {
             this.gameWindow.loadURL(clipboard.readText())
           }
-          else getLink()
         }
-        else getLink()
       },
       'F10': () => (this.gameWindow.isMaximized()) ? this.gameWindow.unmaximize(true) : this.gameWindow.maximize(true),
       'F11': () => this.gameWindow.setSimpleFullScreen(!this.gameWindow.isSimpleFullScreen()),
