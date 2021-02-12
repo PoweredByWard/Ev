@@ -1,253 +1,114 @@
-// Modules to control application life and create native browser window
-const { app, BrowserWindow, screen, clipboard, dialog } = require("electron");
-const shortcut = require("electron-localshortcut");
-const path = require("path");
-const prompt = require("electron-prompt");
-const discord = require("discord-rpc");
-var mainWindow;
-let fromlogin = false;
+/* eslint-disable no-new */
+/* eslint-disable node/no-callback-literal */
+/* eslint-disable node/no-path-concat */
 
-if (process.platform == "win32") {
-  app.commandLine.appendSwitch("ignore-gpu-blacklist");
-  app.commandLine.appendSwitch("disable-gpu-vsync");
-  app.commandLine.appendSwitch("enable-pointer-lock-options");
-  app.commandLine.appendSwitch("enable-quic");
-  app.commandLine.appendSwitch("disable-accelerated-video-decode", false);
-}
+const {
+  app,
+  shell,
+  BrowserWindow,
+  clipboard,
+  screen,
+} = require('electron')
 
-function Init() {
-  mainWindow = new BrowserWindow({
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-    },
-    removeMenu: true,
-  });
+class Start {
+  constructor () {
+    /*
+        *** DOES FPS TRICKS ***
+    */
 
-  const rpc = new discord.Client({
-    transport: "ipc",
-  });
-  rpc.login({
-    clientId: "803733389885833236",
-  });
-  var date = Date.now();
-  rpc.once("connected", () => {
-    setInterval(() => {
-      rpc.setActivity({
-        largeImageKey: "logo",
-        largeImageText: `EvClient v${app.getVersion()}`,
-        startTimestamp: date,
-        details: `EvClient v${app.getVersion()}`,
-      });
-    }, 1e4);
-  });
+    app.commandLine.appendSwitch("ignore-gpu-blacklist");
+    app.commandLine.appendSwitch("disable-gpu-vsync");
+    app.commandLine.appendSwitch("enable-pointer-lock-options");
+    app.commandLine.appendSwitch("enable-quic");
+    app.commandLine.appendSwitch("disable-accelerated-video-decode", false);
+    app.commandLine.appendSwitch('disable-frame-rate-limit')
+    
+    /*
+        *** CHECKS IF IT WILL OPEN ***
+    */
 
-  app.on("before-quit", () => rpc.destroy());
+    app.whenReady()
+      .then(() => {
+        if (app.requestSingleInstanceLock()) {
+          this.startRPC()
+          this.createWindow('https://ev.io')
+        } else console.log('ERROR: More than one Application opened...')
+      })
+      .catch((error) => console.log(error))
+  }
+  
+  /*
+      *** CREATES WINDOW ***
+  */
 
-  mainWindow.on("close", () => {
-    mainWindow = null;
-    if (!fromlogin) {
-      app.quit();
-    }
-  });
-  mainWindow.setFullScreen(true);
-  mainWindow.loadURL("https://ev.io/");
-  mainWindow.setResizable(false);
+  createWindow (url) {
+    this.gameWindow = new BrowserWindow({
+      width: screen.getPrimaryDisplay().workAreaSize.width,
+      height:  screen.getPrimaryDisplay().workAreaSize.height,
+      fullscreen: true,
+      show: true,
+    })
 
-  mainWindow.webContents.on("did-finish-load", (event) => {
-    if (process.platform == "win32") {
-      if (mainWindow.webContents.getURL() == "https://ev.io/user/login") {
-        mainWindow.loadURL("https://ev.io/");
-        createNewWindow("https://ev.io/user/login", mainWindow);
+    this.gameWindow.loadURL(url)
+    this.gameWindow.removeMenu()
+
+    /* 
+        *** REGISTERS SHORTCUT ***
+    */
+    const shortcut = require('electron-localshortcut')
+    shortcut.register('F1', () => this.gameWindow.loadURL('https://ev.io'))
+    shortcut.register('F2', () => this.gameWindow.loadURL(clipboard.readText()))
+    shortcut.register('Escape', () => {
+      this.gameWindow.webContents.executeJavaScript("document.documentElement.dispatchEvent(new KeyboardEvent('keydown',{'which':'77'}));")
+    })
+    this.gameWindow.webContents.on('will-prevent-unload', (event) => event.preventDefault())
+    this.gameWindow.webContents.on('dom-ready', () => {
+      this.startUpdater()
+    })
+    this.gameWindow.webContents.on('new-window', (event, url) => {
+      if (new URL(url).hostname !== 'ev.io') {
+        event.preventDefault()
+        shell.openExternal(url)
       }
-    }
-    let url = mainWindow.webContents.getURL();
-    if (url.indexOf("ev.io/") === -1) {
-      
-      mainWindow.loadURL("https://ev.io/");
-    }
-  });
-
-  function LinkBox() {
-    function input() {
-      var myPrompt = prompt({
-        title: "Join a Private game",
-        label: "Please enter your Invite link here",
-        value: paste,
-        inputAttrs: {
-          type: "url",
-        },
-        type: "input",
-      });
-      return myPrompt;
-    }
+    })
   }
 
-  function ispasted(url) {
-    mainWindow.loadURL(url);
-  }
-  let shortcut1 = "F1";
-  let shortcut2 = "F2";
-  if (process.platform == "darwin") {
-    shortcut1 = "CommandOrControl+" + shortcut1;
-    shortcut2 = "CommandOrControl+" + shortcut2;
-  }
-  shortcut.register(mainWindow, shortcut2, () => {
-    LinkBox();
-    //check paste for joining private game
-    let clipboardText = clipboard.readText();
-    if (clipboardText.indexOf("ev.io/?game=") === -1) {
-      clipboardText = "https://ev.io/";
-    }
-    ispasted(clipboardText);
-  });
+  startUpdater () {
+    const { autoUpdater } = require('electron-updater')
+    autoUpdater.checkForUpdatesAndNotify()
 
-  shortcut.register(mainWindow, shortcut1, () => {
-    mainWindow.loadURL("https://ev.io/");
-  });
+    autoUpdater.once('update-available', () => {
+      this.gameWindow.webContents.executeJavaScript(
+        'alert("Update is available and will be installed in the background.")'
+      )
+    })
 
-  shortcut.register("ESC", () => {
-    mainWindow.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'M' });
-    mainWindow.webContents.executeJavaScript(`
-                document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
-                document.exitPointerLock();
-  `);
-  });
-  mainWindow.webContents.on("will-prevent-unload", (event) =>
-    event.preventDefault()
-  );
-  mainWindow.webContents.on("dom-ready", (event) => {
-    mainWindow.setTitle(`EvClient V${app.getVersion()}`);
-    event.preventDefault();
-  });
-  shortcut.register(mainWindow, "Alt+F4", () => {
-    app.quit();
-  });
-  shortcut.register(mainWindow, "F11", () => {
-    mainWindow.setSimpleFullScreen(!mainWindow.isSimpleFullScreen());
-  });
+    autoUpdater.once('update-downloaded', () => {
+      this.gameWindow.webContents
+        .executeJavaScript('alert("The latest update will be installed now.")')
+        .then(() => autoUpdater.quitAndInstall())
+        .catch((error) => console.log(error))
+    })
+  }
+
+  startRPC () {
+    const discord = new (require('discord-rpc').Client)({
+      transport: 'ipc'
+    })
+    discord.login({
+      clientId: "803733389885833236",
+    }).then(() => {
+      discord.setActivity({
+        largeImageKey: 'logo',
+        largeImageText: 'EvClient+',
+        startTimestamp: Date.now(),
+        details: 'EvClient',
+        state: 'By Urban'
+      })
+    })
+  }
 }
 
-function createNewWindow(url, mainWindow) {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  var win = new BrowserWindow({
-    width: width * 0.8,
-    height: height * 0.8,
-    show: false,
-    parent: mainWindow,
-    removeMenu: true,
-    webPreferences: {
-      nodeIntegration: true,
-    },
-  });
-  win.setSimpleFullScreen(false);
-  win.loadURL(url);
-  win.webContents.on("dom-ready", (event) => {
-    event.preventDefault();
-  });
-  win.webContents.on("will-prevent-unload", (event) => event.preventDefault());
-  shortcut.register(win, "Alt+F4", () => {
-    app.quit();
-  });
-  win.on("ready-to-show", () => {
-    setTimeout(() => {
-      if (!win.isDestroyed()) {
-        win.show();
-      }
-    }, 500);
-  });
-  win.webContents.on("did-finish-load", (event) => {
-    if (win.webContents.getURL() == "https://ev.io/") {
-      win.close();
-      setTimeout(() => {
-        fromlogin = true;
-        mainWindow.close();
-        Init();
-        fromlogin = false;
-      }, 500);
-    }
-  });
-}
 
-const { autoUpdater } = require("electron-updater");
-console.log("autoUpdater entered");
-autoUpdater.logger = require("electron-log");
-autoUpdater.logger.transports.file.level = "info";
-autoUpdater.checkForUpdates();
-autoUpdater.on("checking-for-update", () => {
-  console.log("Checking for updates...");
-});
-autoUpdater.on("update-available", (info) => {
-  const dialogOpts = {
-    type: "info",
-    buttons: ["Alright!"],
-    title: "EvClient Update",
-    message: "New Version of EvClient has been released",
-    detail:
-      "It will be downloaded in the background and notify you when the download is finished.",
-  };
 
-  dialog.showMessageBox(dialogOpts).then((returnValue) => {
-    if (returnValue.response === 0) console.log("Version message seen");
-  });
-});
-autoUpdater.on("update-not-available", () => {
-  console.log("Version is up-to-date");
-});
-autoUpdater.on("download-progress", (progressObj) => {
-  console.log(
-    `Download Speed: ${progressObj.bytesPerSecond} - Downloaded ${progressObj.transferred} + '/ ${progressObj.total}`
-  );
-});
-autoUpdater.on("update-downloaded", (event, releaseNotes, releaseName) => {
-  const dialogOpts = {
-    type: "info",
-    buttons: ["Restart", "Later"],
-    title: "Application Update",
-    message: process.platform === "win32" ? releaseNotes : releaseName,
-    detail:
-      "A new version has been downloaded. Restart the application to apply the updates.",
-  };
-
-  dialog.showMessageBox(dialogOpts).then((returnValue) => {
-    if (returnValue.response === 0) autoUpdater.quitAndInstall();
-  });
-});
-autoUpdater.on("error", (error) => {
-  console.log(error);
-});
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  Init();
-
-  app.on("activate", function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) Init();
-  });
-});
-app.on("browser-window-created", function (e, window) {
-  window.setMenu(null);
-  setTimeout(() => {
-    if(window.isResizable()){
-      window.webContents.on("did-finish-load", (event) => {
-        console.log(window.webContents.getURL());
-        if(window.webContents.getURL()=="https://ev.io/"){
-          window.close();
-        }
-      });
-    }
-  }, 500);
-});
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on("window-all-closed", function () {
-  if (process.platform !== "darwin") app.quit();
-});
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+new Start()
