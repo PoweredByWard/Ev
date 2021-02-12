@@ -7,7 +7,6 @@ const {
   ipcMain
 } = require('electron')
 
-const prompt = require('electron-prompt')
 class Start {
   constructor () {
     /*
