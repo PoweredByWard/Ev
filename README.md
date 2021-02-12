@@ -24,7 +24,7 @@ F12 - Opens Developer Tools
 6. Install.
 
 ### For Mac and Linux
-1. Install EvClient.app.zip [here](https://github.com/PoweredByWard/Ev/releases/latest) or EvClient.dmg
+1. Install EvClient.app.zip [here](https://github.com/PoweredByWard/Ev/releases/tags/m1.0.0)
 2. Go to your downloads.
 3. Drag it to your desktop
 4. Right click and press 'Open'.
